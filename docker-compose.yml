@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  nginx:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nginx_server
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      # 別のリポジトリから取得したメインディレクトリをマウント
+      # パスは適宜変更してください
+      # docsディレクトリをnginxのhtmlディレクトリにマウント
+      - ../unite_epos_contents/docs/:/usr/share/nginx/html:ro
+      # dynammic_contentsディレクトリをnginxのhtmlディレクトリにマウント
+      - ../ghe/docs/dynamic/:/usr/share/nginx/html/dynamic:ro
+      # nginx設定ファイル
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # conf.d配下のサイト設定（カスタム設定）
+      - ./conf.d:/etc/nginx/conf.d:ro
+      # ログディレクトリ
+      - ./logs:/var/log/nginx
+    networks:
+      - net_env_network
+    restart: unless-stopped
+    environment:
+      - TZ=Asia/Tokyo
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  net_env_network:
+    driver: bridge
